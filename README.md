@@ -20,7 +20,7 @@ You can deploy `pytrm` globally to your Ubuntu system using our automated instal
 ### 📦 Option 1: Automated 1-Line Network Installation (Recommended)
 Open your native Ubuntu terminal and execute this single pipeline string:
 ```bash
-sudo curl -sL https://githubusercontent.com -o /usr/local/bin/pytrm && sudo chmod +x /usr/local/bin/pytrm
+sudo curl -sL https://githubusercontent.com/squiddy-coder-article/f7582f5e340817312ceba958f878ba98/raw/pytrm.py -o /usr/local/bin/pytrm && sudo chmod +x /usr/local/bin/pytrm
 ```
 
 ### 🗜️ Option 2: Stable Tarball Zip Extraction
