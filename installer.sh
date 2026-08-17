@@ -7,7 +7,7 @@ fi
 
 echo "Deploying pytrm globally to /usr/local/bin..."
 
-curl -sL "https://githubusercontent.com" -o /usr/local/bin/pytrm
+curl -sL "https://tinyurl.com/pytrm-ins" -o /usr/local/bin/pytrm
 
 if [ $? -eq 0 ] && [ -s /usr/local/bin/pytrm ]; then
     chmod +x /usr/local/bin/pytrm
