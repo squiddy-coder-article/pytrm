@@ -16,7 +16,7 @@ An ultra-lightweight, high-performance custom POSIX terminal shell environment w
 
 ## 🛠️ Global Architecture Deployment
 
-You can deploy `pytrm` globally to your native system using our direct network cloud pipeline. Open your native Ubuntu terminal window and execute this single pipeline string:
+You can deploy `pytrm` globally to your native system using our direct network cloud pipeline. Open your native Linux terminal window and execute this single pipeline string:
 
 ```bash
 sudo curl -sL "tinyurl.com/pytrm-ins" | sudo bash
