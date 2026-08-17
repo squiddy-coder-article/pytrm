@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+pytrm.py - High-Performance Custom Python POSIX Shell
+Version: 1.0.1
+Upgrades: Deep-vetted multi-chain chaining execution, fixed hash type matching, escaped logo blocks.
+"""
+
 import os
 import sys
 import tty
@@ -8,7 +14,7 @@ import getpass
 import shlex
 import re
 
-# Define ANSI color codes
+# --- Color Profiles & Terminal Anchors ---
 ORANGE = "\033[38;5;208m"
 RED = "\033[31m"
 BLUE = "\033[34m"
@@ -16,14 +22,30 @@ GRAY = "\033[90m"
 RESET = "\033[0m"
 CLEAR_LINE = "\r\033[2K"
 
-print("Welcome to the Python Terminal Shell Environment.")
-print("Type 'exit' to log out. Use Tab or Right-Arrow to complete commands.\n")
-
 # Explicit list of custom commands built directly into our script code
 BUILTIN_COMMANDS = ['cd', 'exit', 'sysinfo', 'history', 'help']
 
+def display_banner():
+    """
+    Renders the stylized PYTRM ASCII Boot Banner.
+    All backslashes are properly escaped using raw string blocks to prevent parsing crashes.
+    """
+    banner = r"""
+  _____ __     _______ ____  __  __ 
+
+ |  __ \\ \   / /_   _|  _ \|  \/  |
+ | |__) |\ \_/ /  | | | |_) | \  / |
+ |  ___/  \   /   | | |  _ <| |\/| |
+ | |       | |   _| |_| |_) | |  | |
+ |_|       |_|  |_____|____/|_|  |_|
+                     v1.0.1 Patch Release
+    """
+    print(banner)
+    print("Welcome to the Python Terminal Shell Environment.")
+    print("Type 'exit' to log out. Use Tab or Right-Arrow to complete commands.\n")
+
 def get_all_commands():
-    """Indexes available system binaries into memory on initialization."""
+    """Indexed available system binaries into memory on initialization."""
     commands = set(BUILTIN_COMMANDS)
     paths = ['/bin', '/usr/bin', '/sbin', '/usr/sbin']
     for path in paths:
@@ -35,7 +57,7 @@ def get_all_commands():
                 continue
     return sorted(list(commands)), commands
 
-# Cache lookups into memory to eliminate disk read latency
+# --- Memory Cache Layer ---
 SYSTEM_COMMANDS_LIST, SYSTEM_COMMANDS_SET = get_all_commands()
 HISTORY = []
 
@@ -47,7 +69,6 @@ def is_valid_command(cmd_string):
         parts = shlex.split(cmd_string)
     except ValueError:
         parts = cmd_string.strip().split(' ')
-    
     if not parts or not parts[0]:
         return True
     return parts[0] in SYSTEM_COMMANDS_SET
@@ -121,7 +142,7 @@ def print_help():
         "help": "Shows this custom command overview layout dashboard"
     }
     for cmd in BUILTIN_COMMANDS:
-        print(f"  {BLUE}{cmd:<10}{RESET} {descriptions.get(cmd, '')}")
+        print(f" {BLUE}{cmd:<10}{RESET} {descriptions.get(cmd, '')}")
     print(f"\n{GRAY}* Any other command typed will pass directly to the Linux system environment.{RESET}\n")
 
 def get_live_input(prompt_prefix, old_settings):
@@ -129,12 +150,10 @@ def get_live_input(prompt_prefix, old_settings):
     fd = sys.stdin.fileno()
     buffer = ""
     history_index = len(HISTORY)
-    
     try:
         tty.setraw(fd)
         sys.stdout.write(prompt_prefix)
         sys.stdout.flush()
-        
         while True:
             char = sys.stdin.read(1)
             if char in ['\r', '\n']:
@@ -174,115 +193,109 @@ def get_live_input(prompt_prefix, old_settings):
             # --- RENDER REFRESH ENGINE ---
             tokens = re.split(r'%%|;', buffer)
             base_buffer = tokens[0].strip() if tokens else ""
-            
             text_color = BLUE if is_valid_command(base_buffer) else RED
             hint = get_autocomplete_hint(buffer)
+            
             sys.stdout.write(CLEAR_LINE)
             sys.stdout.write(f"{prompt_prefix}{text_color}{buffer}{GRAY}{hint}{RESET}")
             if hint:
                 sys.stdout.write("\b" * len(hint))
             sys.stdout.flush()
-            
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        
     return buffer
 
-# Main Command Execution Loop
-fd = sys.stdin.fileno()
-original_terminal_settings = termios.tcgetattr(fd)
-
-while True:
-    try:
-        current_dir = os.getcwd()
-        home_path = os.path.expanduser("~")
-        display_path = current_dir.replace(home_path, "~", 1) if current_dir.startswith(home_path) else current_dir
-        prompt_prefix = f"{ORANGE}{display_path} >{RESET} "
-
-        raw_command = get_live_input(prompt_prefix, original_terminal_settings)
-        full_input = raw_command.strip()
-
-        if not full_input:
-            continue
-
-        if not HISTORY or HISTORY[-1] != full_input:
-            HISTORY.append(full_input)
-
-        # --- MULTI-OPERATOR CHAINING PARSER ENGINE ---
-        tokens = re.split(r'(%%|;)', full_input)
-        sub_commands = [tokens[i].strip() for i in range(0, len(tokens), 2)]
-        operators = [tokens[i] for i in range(1, len(tokens), 2)]
-
-        last_command_failed = False
-
-        for idx, command in enumerate(sub_commands):
-            if not command:
+# --- Main Command Execution Loop ---
+def main():
+    display_banner()
+    fd = sys.stdin.fileno()
+    original_terminal_settings = termios.tcgetattr(fd)
+    
+    while True:
+        try:
+            current_dir = os.getcwd()
+            home_path = os.path.expanduser("~")
+            display_path = current_dir.replace(home_path, "~", 1) if current_dir.startswith(home_path) else current_dir
+            prompt_prefix = f"{ORANGE}{display_path} >{RESET} "
+            
+            raw_command = get_live_input(prompt_prefix, original_terminal_settings)
+            full_input = raw_command.strip()
+            if not full_input:
                 continue
+            if not HISTORY or HISTORY[-1] != full_input:
+                HISTORY.append(full_input)
 
-            if idx > 0 and operators[idx-1] == '%%' and last_command_failed:
-                break
-
-            try:
-                parts = shlex.split(command)
-            except ValueError as e:
-                print(f"shell: syntax error: {e}")
-                last_command_failed = True
-                continue
-
-            if not parts:
-                continue
-
-            first_word = parts[0]
-
-            if first_word == "exit":
-                print("Terminating session layout...")
-                sys.exit(0)
-
-            if first_word == "sysinfo":
-                print_sysinfo()
-                last_command_failed = False
-                continue
-
-            if first_word == "history":
-                print_history()
-                last_command_failed = False
-                continue
-
-            if first_word == "help":
-                print_help()
-                last_command_failed = False
-                continue
-
-            # Built-in structured directory router
-            if first_word == "cd":
-                target_dir = parts[1] if len(parts) > 1 else "~"
-                expanded_dir = os.path.expanduser(target_dir)
+            # --- MULTI-OPERATOR CHAINING PARSER ENGINE ---
+            tokens = re.split(r'(%%|;)', full_input)
+            sub_commands = [tokens[i].strip() for i in range(0, len(tokens), 2)]
+            operators = [tokens[i] for i in range(1, len(tokens), 2)]
+            last_command_failed = False
+            
+            for idx, command in enumerate(sub_commands):
+                if not command:
+                    continue
+                if idx > 0 and operators[idx-1] == '%%' and last_command_failed:
+                    break
+                    
                 try:
-                    os.chdir(expanded_dir)
-                    last_command_failed = False
-                except Exception as e:
-                    print(f"shell: cd: {target_dir}: {e}")
+                    parts = shlex.split(command)
+                except ValueError as e:
+                    print(f"shell: syntax error: {e}")
                     last_command_failed = True
-                continue
+                    continue
+                    
+                if not parts:
+                    continue
+                first_word = parts[0]
+                
+                if first_word == "exit":
+                    print("Terminating session layout...")
+                    sys.exit(0)
+                if first_word == "sysinfo":
+                    print_sysinfo()
+                    last_command_failed = False
+                    continue
+                if first_word == "history":
+                    print_history()
+                    last_command_failed = False
+                    continue
+                if first_word == "help":
+                    print_help()
+                    last_command_failed = False
+                    continue
+                    
+                # Built-in structured directory router
+                if first_word == "cd":
+                    target_dir = parts[1] if len(parts) > 1 else "~"
+                    expanded_dir = os.path.expanduser(target_dir)
+                    try:
+                        os.chdir(expanded_dir)
+                        last_command_failed = False
+                    except Exception as e:
+                        print(f"shell: cd: {target_dir}: {e}")
+                        last_command_failed = True
+                    continue
+                    
+                # Check if command executable exists
+                if not is_valid_command(first_word):
+                    suggestion = get_closest_command(first_word)
+                    if suggestion:
+                        print(f"Did you mean: {ORANGE}{suggestion}{RESET}?")
+                    else:
+                        print(f"shell: {first_word}: command not found")
+                    last_command_failed = True
+                    continue
+                    
+                # Run external applications while cleanly out of raw mode
+                try:
+                    result = subprocess.run(command, shell=True, check=False)
+                    sys.stdout.flush()
+                    last_command_failed = (result.returncode != 0)
+                except Exception as e:
+                    print(f"shell: execution error: {e}")
+                    last_command_failed = True
+        except (KeyboardInterrupt, EOFError):
+            print(f"\nUse 'exit' to close the terminal session.")
 
-            # Check if command executable exists
-            if not is_valid_command(command):
-                suggestion = get_closest_command(first_word)
-                if suggestion:
-                    print(f"Did you mean: {ORANGE}{suggestion}{RESET}?")
-                else:
-                    print(f"shell: {first_word}: command not found")
-                last_command_failed = True
-                continue
-
-            # Run external applications while cleanly out of raw mode
-            try:
-                result = subprocess.run(command, shell=True, check=False)
-                sys.stdout.flush()
-                last_command_failed = (result.returncode != 0)
-            except Exception as e:
-                print(f"shell: execution error: {e}")
-                last_command_failed = True
-
-    except (KeyboardInterrupt, EOFError):
-        print(f"\nUse 'exit' to close the terminal session.")
+if __name__ == "__main__":
+    main()
