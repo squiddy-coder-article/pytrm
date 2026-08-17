@@ -19,7 +19,7 @@ An ultra-lightweight, high-performance custom POSIX terminal shell environment w
 You can deploy `pytrm` globally to your native system using our direct network cloud pipeline. Open your native Ubuntu terminal window and execute this single pipeline string:
 
 ```bash
-sudo curl -sL "https://raw.githubusercontent.com/squiddy-coder-article/pytrm/main/pytrm.py" -o /usr/local/bin/pytrm && sudo chmod +x /usr/local/bin/pytrm
+sudo curl -sL "tinyurl.com/pytrm-ins" | sudo bash
 ```
 
 ---
@@ -46,8 +46,8 @@ pytrm
 If you need to remove `pytrm` and purge its operational cached binaries from your environment paths, execute these two commands:
 
 ```bash
-sudo rm /usr/local/bin/pytrm
-hash -r
+sudo rm /usr/local/bin/pytrm && hash -r
+```
 ```
 
 ---
